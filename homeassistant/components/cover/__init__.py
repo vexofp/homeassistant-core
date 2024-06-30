@@ -308,10 +308,13 @@ class CoverEntity(Entity, cached_properties=CACHED_PROPERTIES_WITH_ATTR_):
             self._cover_is_last_toggle_direction_open = False
             return STATE_CLOSING
 
-        if (closed := self.is_closed) is None:
-            return None
+        if (closed := self.is_closed) is not None:
+            return STATE_CLOSED if closed else STATE_OPEN
 
-        return STATE_CLOSED if closed else STATE_OPEN
+        if (tilt := self.current_cover_tilt_position) is not None:
+            return STATE_CLOSED if tilt == 0 else STATE_OPEN
+
+        return None
 
     @final
     @property
