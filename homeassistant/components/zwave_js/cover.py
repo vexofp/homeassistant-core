@@ -359,7 +359,7 @@ class ZWaveWindowCovering(CoverPositionMixin, CoverTiltMixin):
             )
         # If primary value is for tilt, there is no position value
         else:
-            tilt_value = info.primary_value
+            pos_value = tilt_value = info.primary_value
 
         # Set position and tilt values if they exist. If the corresponding value is of
         # the type No Position, we remove the corresponding set position feature.
@@ -379,11 +379,21 @@ class ZWaveWindowCovering(CoverPositionMixin, CoverTiltMixin):
                     assert self._attr_supported_features
                     self._attr_supported_features ^= set_position_feature
 
+        self._pos_is_tilt = pos_value is tilt_value
+        if self._pos_is_tilt and self._attr_supported_features:
+            self._attr_supported_features &= ~(
+                CoverEntityFeature.OPEN_TILT
+                | CoverEntityFeature.CLOSE_TILT
+                | CoverEntityFeature.STOP_TILT
+                | CoverEntityFeature.SET_TILT_POSITION
+            )
+
         additional_info: list[str] = [
             value.property_key_name.removesuffix(f" {NO_POSITION_SUFFIX}")
             for value in (self._current_position_value, self._current_tilt_value)
             if value and value.property_key_name
         ]
+
         self._attr_name = self.generate_name(additional_info=additional_info)
         self._attr_device_class = CoverDeviceClass.WINDOW
 
@@ -401,6 +411,27 @@ class ZWaveWindowCovering(CoverPositionMixin, CoverTiltMixin):
     def _tilt_range(self) -> int:
         """Return range of valid tilt positions."""
         return abs(SlatStates.CLOSED_2 - SlatStates.CLOSED_1)
+
+    @property
+    def _fully_open_position(self) -> int:
+        """Return value that represents fully opened position."""
+        if self._pos_is_tilt:
+            return self._fully_open_tilt
+        return super()._fully_open_position
+
+    @property
+    def _fully_closed_position(self) -> int:
+        """Return value that represents fully closed position."""
+        if self._pos_is_tilt:
+            return self._fully_closed_tilt
+        return super()._fully_closed_position
+
+    @property
+    def _position_range(self) -> int:
+        """Return range between fully opened and fully closed position."""
+        if self._pos_is_tilt:
+            return self._tilt_range
+        return super()._position_range
 
 
 class ZwaveMotorizedBarrier(ZWaveBaseEntity, CoverEntity):
