@@ -160,6 +160,10 @@ RECORDER_INTEGRATIONS = {
     # To record data
     "recorder",
 }
+PRE_HTTP_INTEGRATIONS = {
+    # Set up before anything might start making HTTP requests
+    "extra_tls_certificates",
+}
 DISCOVERY_INTEGRATIONS = ("bluetooth", "dhcp", "ssdp", "usb", "zeroconf")
 STAGE_1_INTEGRATIONS = {
     # We need to make sure discovery integrations
@@ -229,6 +233,8 @@ SETUP_ORDER = (
     ("recorder", RECORDER_INTEGRATIONS),
     # Start up debuggers. Start these first in case they want to wait.
     ("debugger", DEBUGGER_INTEGRATIONS),
+    # Start before we start making HTTP requests
+    ("pre-http", PRE_HTTP_INTEGRATIONS),
 )
 
 #

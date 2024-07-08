@@ -64,6 +64,7 @@ NO_IOT_CLASS = [
     "device_tracker",
     "diagnostics",
     "downloader",
+    "extra_tls_certificates",
     "ffmpeg",
     "file_upload",
     "frontend",
