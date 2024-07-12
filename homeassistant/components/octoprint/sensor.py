@@ -40,7 +40,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the available OctoPrint binary sensors."""
+    """Set up the available OctoPrint sensors."""
     coordinator: OctoprintDataUpdateCoordinator = hass.data[DOMAIN][
         config_entry.entry_id
     ]["coordinator"]
@@ -84,6 +84,7 @@ async def async_setup_entry(
         OctoPrintJobPercentageSensor(coordinator, device_id),
         OctoPrintEstimatedFinishTimeSensor(coordinator, device_id),
         OctoPrintStartTimeSensor(coordinator, device_id),
+        OctoPrintJobNameSensor(coordinator, device_id),
     ]
 
     async_add_entities(entities)
@@ -109,7 +110,7 @@ class OctoPrintSensorBase(
 
 
 class OctoPrintStatusSensor(OctoPrintSensorBase):
-    """Representation of an OctoPrint sensor."""
+    """Representation of an OctoPrint status sensor."""
 
     _attr_icon = "mdi:printer-3d"
 
@@ -135,7 +136,7 @@ class OctoPrintStatusSensor(OctoPrintSensorBase):
 
 
 class OctoPrintJobPercentageSensor(OctoPrintSensorBase):
-    """Representation of an OctoPrint sensor."""
+    """Representation of an OctoPrint job percentage sensor."""
 
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_icon = "mdi:file-percent"
@@ -160,7 +161,7 @@ class OctoPrintJobPercentageSensor(OctoPrintSensorBase):
 
 
 class OctoPrintEstimatedFinishTimeSensor(OctoPrintSensorBase):
-    """Representation of an OctoPrint sensor."""
+    """Representation of an OctoPrint estimated finish time sensor."""
 
     _attr_device_class = SensorDeviceClass.TIMESTAMP
 
@@ -189,7 +190,7 @@ class OctoPrintEstimatedFinishTimeSensor(OctoPrintSensorBase):
 
 
 class OctoPrintStartTimeSensor(OctoPrintSensorBase):
-    """Representation of an OctoPrint sensor."""
+    """Representation of an OctoPrint start time sensor."""
 
     _attr_device_class = SensorDeviceClass.TIMESTAMP
 
@@ -219,8 +220,9 @@ class OctoPrintStartTimeSensor(OctoPrintSensorBase):
 
 
 class OctoPrintTemperatureSensor(OctoPrintSensorBase):
-    """Representation of an OctoPrint sensor."""
+    """Representation of an OctoPrint temperature sensor."""
 
+    _attr_icon = "mdi:printer-3d-nozzle-heat"
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -262,3 +264,37 @@ class OctoPrintTemperatureSensor(OctoPrintSensorBase):
     def available(self) -> bool:
         """Return if entity is available."""
         return self.coordinator.last_update_success and self.coordinator.data["printer"]
+
+
+class OctoPrintJobNameSensor(OctoPrintSensorBase):
+    """Representation of an OctoPrint job name sensor."""
+
+    _attr_icon = "mdi:printer-3d-nozzle"
+
+    def __init__(
+        self, coordinator: OctoprintDataUpdateCoordinator, device_id: str
+    ) -> None:
+        """Initialize a new OctoPrint sensor."""
+        super().__init__(coordinator, "Job Name", device_id)
+
+    @property
+    def native_value(self):
+        """Return sensor state."""
+        job: OctoprintJobInfo = self.coordinator.data["job"]
+        if not job or not job.job.file:
+            return None
+
+        return job.job.file.name
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+
+        if not self.coordinator.last_update_success:
+            return False
+
+        job: OctoprintJobInfo = self.coordinator.data["job"]
+        if not job or not job.job.file:
+            return False
+
+        return bool(job.job.file.name)
