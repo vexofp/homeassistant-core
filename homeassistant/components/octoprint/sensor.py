@@ -23,8 +23,6 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-JOB_PRINTING_STATES = ["Printing from SD", "Printing"]
-
 
 def _is_printer_printing(printer: OctoprintPrinterInfo) -> bool:
     return (
@@ -113,6 +111,31 @@ class OctoPrintStatusSensor(OctoPrintSensorBase):
     """Representation of an OctoPrint status sensor."""
 
     _attr_icon = "mdi:printer-3d"
+    _attr_device_class = SensorDeviceClass.ENUM
+    # See octoprint.util.comm.MahcineCom.getStateString()
+    # https://github.com/OctoPrint/OctoPrint/blob/ad9ebcaa0ef91950652fb2561b7c06b79d95a455/src/octoprint/util/comm.py#L963
+    _attr_options = [
+        "Offline",
+        "Opening serial connection",
+        "Detecting serial connection",
+        "Connecting",
+        "Operational",
+        "Starting print from SD",
+        "Starting to send file to SD",
+        "Starting",
+        "Printing from SD",
+        "Sending file to SD",
+        "Printing",
+        "Cancelling",
+        "Pausing",
+        "Paused",
+        "Resuming",
+        "Finishing",
+        "Offline",
+        "Error",
+        "Offline after error",
+        "Transferring file to SD",
+    ]
 
     def __init__(
         self, coordinator: OctoprintDataUpdateCoordinator, device_id: str
