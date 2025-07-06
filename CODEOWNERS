@@ -526,6 +526,7 @@ CLAUDE.md @home-assistant/core
 /tests/components/event/ @home-assistant/core
 /homeassistant/components/evohome/ @zxdavb
 /tests/components/evohome/ @zxdavb
+/homeassistant/components/extra_tls_certificates/ @home-assistant/core
 /homeassistant/components/ezviz/ @RenierM26
 /tests/components/ezviz/ @RenierM26
 /homeassistant/components/faa_delays/ @ntilley905

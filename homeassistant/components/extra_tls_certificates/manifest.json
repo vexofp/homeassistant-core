@@ -1,0 +1,9 @@
+{
+  "domain": "extra_tls_certificates",
+  "name": "Extra TLS Certificates",
+  "codeowners": ["@home-assistant/core"],
+  "dependencies": [],
+  "documentation": "https://www.home-assistant.io/integrations/extra_tls_certificates",
+  "integration_type": "system",
+  "quality_scale": "internal"
+}

@@ -73,6 +73,7 @@ NO_IOT_CLASS = [
     "door",
     "doorbell",
     "downloader",
+    "extra_tls_certificates",
     "ffmpeg",
     "file_upload",
     "frontend",

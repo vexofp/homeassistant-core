@@ -156,6 +156,7 @@ LOGGING_AND_HTTP_DEPS_INTEGRATIONS = {
     # before hassio or any other integration is
     # loaded that might create an aiohttp client session
     "network",
+    "extra_tls_certificates",
     # Error logging
     "system_log",
     "sentry",
