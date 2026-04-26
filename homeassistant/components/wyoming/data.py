@@ -2,7 +2,7 @@
 
 import asyncio
 
-from wyoming.client import AsyncTcpClient
+from wyoming.client import AsyncClient, AsyncTcpClient, AsyncUnixClient
 from wyoming.info import Describe, Info
 
 from homeassistant.const import Platform
@@ -108,7 +108,11 @@ async def load_wyoming_info(
 
     for _ in range(retries + 1):
         try:
-            async with AsyncTcpClient(host, port) as client, asyncio.timeout(timeout):
+            if port:
+                client = AsyncTcpClient(host, port)
+            else:
+                client = AsyncUnixClient(host)
+            async with client as client, asyncio.timeout(timeout):
                 # Describe -> Info
                 await client.write_event(Describe().event())
                 while True:

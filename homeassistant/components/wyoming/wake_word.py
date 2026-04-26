@@ -5,7 +5,7 @@ from collections.abc import AsyncIterable
 import logging
 
 from wyoming.audio import AudioChunk, AudioStart
-from wyoming.client import AsyncTcpClient
+from wyoming.client import AsyncClient, AsyncTcpClient, AsyncUnixClient
 from wyoming.wake import Detect, Detection
 
 from homeassistant.components import wake_word
@@ -90,7 +90,11 @@ class WyomingWakeWordProvider(wake_word.WakeWordDetectionEntity):
             return None
 
         try:
-            async with AsyncTcpClient(self.service.host, self.service.port) as client:
+            if self.service.port:
+                client = AsyncTcpClient(self.service.host, self.service.port)
+            else:
+                client = AsyncUnixClient(self.service.host)
+            async with client as client:
                 # Inform client which wake word we want to detect (None = default)
                 await client.write_event(
                     Detect(names=[wake_word_id] if wake_word_id else None).event()

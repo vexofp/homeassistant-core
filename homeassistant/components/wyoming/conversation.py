@@ -5,7 +5,7 @@ import logging
 from typing import Any, Literal
 
 from wyoming.asr import Transcript
-from wyoming.client import AsyncTcpClient
+from wyoming.client import AsyncClient, AsyncTcpClient, AsyncUnixClient
 from wyoming.handle import Handled, NotHandled
 from wyoming.info import HandleProgram, IntentProgram
 from wyoming.intent import Intent, IntentsStart, IntentsStop, NotRecognized
@@ -117,7 +117,11 @@ class WyomingConversationEntity(
             context["satellite_id"] = user_input.satellite_id
 
         try:
-            async with AsyncTcpClient(self.service.host, self.service.port) as client:
+            if self.service.port:
+                client = AsyncTcpClient(self.service.host, self.service.port)
+            else:
+                client = AsyncUnixClient(self.service.host)
+            async with client as client:
                 await client.write_event(
                     Transcript(
                         user_input.text,

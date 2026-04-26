@@ -7,7 +7,7 @@ import logging
 import wave
 
 from wyoming.audio import AudioChunk, AudioStart, AudioStop
-from wyoming.client import AsyncTcpClient
+from wyoming.client import AsyncClient, AsyncTcpClient, AsyncUnixClient
 from wyoming.tts import (
     Synthesize,
     SynthesizeChunk,
@@ -98,7 +98,11 @@ class WyomingTtsProvider(tts.TextToSpeechEntity):
         voice_speaker: str | None = options.get(ATTR_SPEAKER)
 
         try:
-            async with AsyncTcpClient(self.service.host, self.service.port) as client:
+            if self.service.port:
+                client = AsyncTcpClient(self.service.host, self.service.port)
+            else:
+                client = AsyncUnixClient(self.service.host)
+            async with client as client:
                 voice: SynthesizeVoice | None = None
                 if voice_name is not None:
                     voice = SynthesizeVoice(name=voice_name, speaker=voice_speaker)
@@ -151,7 +155,11 @@ class WyomingTtsProvider(tts.TextToSpeechEntity):
         if voice_name is not None:
             voice = SynthesizeVoice(name=voice_name, speaker=voice_speaker)
 
-        client = AsyncTcpClient(self.service.host, self.service.port)
+        if self.service.port:
+            client = AsyncTcpClient(self.service.host, self.service.port)
+        else:
+            client = AsyncUnixClient(self.service.host)
+
         await client.connect()
 
         # Stream text chunks to client
@@ -174,7 +182,7 @@ class WyomingTtsProvider(tts.TextToSpeechEntity):
     async def _write_tts_message(
         self,
         message_gen: AsyncGenerator[str],
-        client: AsyncTcpClient,
+        client: AsyncClient,
         voice: SynthesizeVoice | None,
     ) -> None:
         """Write text chunks to the client."""
@@ -198,7 +206,7 @@ class WyomingTtsProvider(tts.TextToSpeechEntity):
             # Disconnected
             _LOGGER.warning("Unexpected disconnection from TTS client")
 
-    async def _read_tts_audio(self, client: AsyncTcpClient) -> AsyncGenerator[bytes]:
+    async def _read_tts_audio(self, client: AsyncClient) -> AsyncGenerator[bytes]:
         """Read audio events from the client and yield WAV audio chunks.
 
         The WAV header is sent first with a frame count of 0 to indicate that

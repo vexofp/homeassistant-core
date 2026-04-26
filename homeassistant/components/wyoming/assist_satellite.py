@@ -10,7 +10,7 @@ import wave
 
 from wyoming.asr import Transcribe, Transcript
 from wyoming.audio import AudioChunk, AudioChunkConverter, AudioStart, AudioStop
-from wyoming.client import AsyncTcpClient
+from wyoming.client import AsyncClient, AsyncTcpClient, AsyncUnixClient
 from wyoming.error import Error
 from wyoming.event import Event
 from wyoming.info import Describe, Info
@@ -106,7 +106,7 @@ class WyomingAssistSatellite(WyomingSatelliteEntity, AssistSatelliteEntity):
 
         self.is_running = True
 
-        self._client: AsyncTcpClient | None = None
+        self._client: AsyncClient | None = None
         self._chunk_converter = AudioChunkConverter(rate=16000, width=2, channels=1)
         self._is_pipeline_running = False
         self._pipeline_ended_event = asyncio.Event()
@@ -726,7 +726,10 @@ class WyomingAssistSatellite(WyomingSatelliteEntity, AssistSatelliteEntity):
         _LOGGER.debug(
             "Connecting to satellite at %s:%s", self.service.host, self.service.port
         )
-        self._client = AsyncTcpClient(self.service.host, self.service.port)
+        if self.service.port:
+            self._client = AsyncTcpClient(self.service.host, self.service.port)
+        else:
+            self._client = AsyncUnixClient(self.service.host)
         await self._client.connect()
 
     async def _disconnect(self) -> None:

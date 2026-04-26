@@ -5,7 +5,7 @@ import logging
 
 from wyoming.asr import Transcribe, Transcript
 from wyoming.audio import AudioChunk, AudioStart, AudioStop
-from wyoming.client import AsyncTcpClient
+from wyoming.client import AsyncClient, AsyncTcpClient, AsyncUnixClient
 
 from homeassistant.components import stt
 from homeassistant.core import HomeAssistant
@@ -89,7 +89,11 @@ class WyomingSttProvider(stt.SpeechToTextEntity):
     ) -> stt.SpeechResult:
         """Process an audio stream to STT service."""
         try:
-            async with AsyncTcpClient(self.service.host, self.service.port) as client:
+            if self.service.port:
+                client = AsyncTcpClient(self.service.host, self.service.port)
+            else:
+                client = AsyncUnixClient(self.service.host)
+            async with client as client:
                 # Set transcription language
                 await client.write_event(Transcribe(language=metadata.language).event())
 
