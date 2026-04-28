@@ -502,6 +502,29 @@ class ZWaveWindowCovering(CoverPositionMixin, CoverTiltMixin):
         """Return range of valid tilt positions."""
         return abs(SlatStates.CLOSED_2 - SlatStates.CLOSED_1)
 
+    @property
+    def _fully_open_position(self) -> int:
+        """Return value that represents fully opened position."""
+        if self._pos_is_tilt:
+            return self._fully_open_tilt
+        max_ = self._current_position_value.metadata.max
+        return 99 if max_ is None else max_
+
+    @property
+    def _fully_closed_position(self) -> int:
+        """Return value that represents fully closed position."""
+        if self._pos_is_tilt:
+            return self._fully_closed_tilt
+        min_ = self._current_position_value.metadata.min
+        return 0 if min_ is None else min_
+
+    @property
+    def _position_range(self) -> int:
+        """Return range between fully opened and fully closed position."""
+        if self._pos_is_tilt:
+            return self._tilt_range
+        return super()._position_range
+
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
         # Check before issuing the command in case targetValue report arrives early.
@@ -511,9 +534,10 @@ class ZWaveWindowCovering(CoverPositionMixin, CoverTiltMixin):
             and (tpv := self._target_position_value) is not None
             and tpv.value == cv.value == self._fully_open_position
         )
-        result = await self._async_set_value(self._up_value, True)
+        #result = await self._async_set_value(self._up_value, True)
         # StartLevelChange: SUCCESS means the device started
         # moving in the desired direction
+        result = await self._async_set_value(self._target_position_value, self._fully_open_position)
         if (
             result is not None
             and result.status in SET_VALUE_SUCCESS
@@ -533,9 +557,10 @@ class ZWaveWindowCovering(CoverPositionMixin, CoverTiltMixin):
             and (tpv := self._target_position_value) is not None
             and tpv.value == cv.value == self._fully_closed_position
         )
-        result = await self._async_set_value(self._down_value, True)
+        #result = await self._async_set_value(self._down_value, True)
         # StartLevelChange: SUCCESS means the device started
         # moving in the desired direction
+        result = await self._async_set_value(self._target_position_value, self._fully_closed_position)
         if (
             result is not None
             and result.status in SET_VALUE_SUCCESS
@@ -558,26 +583,6 @@ class ZWaveWindowCovering(CoverPositionMixin, CoverTiltMixin):
             self._attr_is_opening = False
             self._attr_is_closing = False
             self.async_write_ha_state()
-    @property
-    def _fully_open_position(self) -> int:
-        """Return value that represents fully opened position."""
-        if self._pos_is_tilt:
-            return self._fully_open_tilt
-        return super()._fully_open_position
-
-    @property
-    def _fully_closed_position(self) -> int:
-        """Return value that represents fully closed position."""
-        if self._pos_is_tilt:
-            return self._fully_closed_tilt
-        return super()._fully_closed_position
-
-    @property
-    def _position_range(self) -> int:
-        """Return range between fully opened and fully closed position."""
-        if self._pos_is_tilt:
-            return self._tilt_range
-        return super()._position_range
 
 
 class ZwaveMotorizedBarrier(ZWaveBaseEntity, CoverEntity):
